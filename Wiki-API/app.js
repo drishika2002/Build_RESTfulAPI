@@ -33,7 +33,9 @@ const articleSchema = new mongoose.Schema({
 
 const Article = new mongoose.model("Article", articleSchema);
 
-// Creating get route to fetch articles
+//****** REQUESTS TARGETING ALL ARTICLES ********//
+ 
+// Creating get route to fetch articles, post route to add new articles and delete route to delete articles
 app.route("/articles")
 .get((req, res)=>{
     Article.find({}).then((foundArticles) => {
@@ -51,17 +53,42 @@ app.route("/articles")
     }).catch((e) => console.log("Unable to save article to the database..."))
 })
 .delete((req, res) => {
-    Article.deleteMany({}).then(() => console.log("Article deleted successfully..."))
+    Article.deleteMany({}).then(() => console.log("Articles deleted successfully..."))
     .catch((e) => console.log("Caught an error while deleting post"));
+})
+
+
+//****** REQUESTS TARGETING SPECIFIC ARTICLES ********//
+
+app.route("/articles/:articleTitle")
+.get((req, res) => {
+    Article.findOne({title: req.params.articleTitle}).then((foundArticle) => res.send(foundArticle))
+    .catch((error) => res.send("No matching article found!"));
+})
+.put((req, res) => {
+    Article.replaceOne(
+        {title: req.params.articleTitle}, 
+        {title: req.body.title, content: req.body.content},
+        {overwrite: true}
+    ).then(() => res.send("Article updated successfully!"))
+    .catch((error) => res.send("Error caught while updating the article"));
+})
+
+.patch((req, res) => {
+    Article.updateOne(
+        {title: req.params.articleTitle}, 
+        {$set: req.body}
+    ).then(() => res.send("Article updated successfully!"))
+    .catch((error) => res.send("Error caught while updating the article"));
+})
+.delete((req, res) => {
+    Article.deleteOne({title: req.params.articleTitle}).then(() => res.send("Article deleted!"))
+    .catch((error) => res.send("No matching article found!"));
 })
 
 app.set('view engine', 'ejs');
 
-
-
 app.use(express.static("public"));
-
-
 
 app.listen(3000, (req, res) => {
     console.log("Server started at port 3000")
